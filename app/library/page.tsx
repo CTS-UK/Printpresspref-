@@ -198,7 +198,7 @@ export default async function LibraryPage({
 
       <section className="section" id="presses">
         <h2>Presses</h2>
-        <p className="muted">Add these when you have the brand and model. If the controller reads hotter than the platen, put how many degrees too high in the offset. Use a negative number if it reads low. Sizes in centimetres.</p>
+        <p className="muted">The HTVRONT Auto Heat Press is already listed. If the controller reads hotter than the platen, put how many degrees too high in the offset. Use a negative number if it reads low. Sizes in centimetres. One tip per line. The first three lines show on every press card. The rest sit under How to use this press.</p>
         {catalog.machines.map((machine) => (
           <form action={storeMachine} className="card fields" key={machine.id} style={{ marginBottom: "0.7rem" }}>
             <input type="hidden" name="id" value={machine.id} />
@@ -216,13 +216,16 @@ export default async function LibraryPage({
               <label>
                 Pressure control
                 <select name="pressure_style" defaultValue={machine.pressureStyle}>
+                  <option value="auto">Automatic, about 60 kg</option>
                   <option value="words">Light, medium, firm</option>
                   <option value="knob">Numbered knob</option>
                   <option value="psi">PSI gauge</option>
                 </select>
               </label>
+              <label>Timer stops at (seconds)<input name="max_seconds" type="number" min={1} step={1} defaultValue={machine.maxSeconds ?? ""} placeholder="No limit" /></label>
             </div>
             <label>Notes<input name="notes" defaultValue={machine.notes} /></label>
+            <label>Tips, one per line<textarea name="tips" defaultValue={machine.tips} /></label>
             <button className="secondary" type="submit">Save press</button>
           </form>
         ))}
@@ -232,16 +235,26 @@ export default async function LibraryPage({
             <label>Name<input name="name" required placeholder="Cup press" /></label>
             <label>
               Type
-              <select name="kind" defaultValue="flat">
+              <select name="kind" defaultValue="cup">
                 <option value="flat">Flat press</option>
                 <option value="cup">Cup press</option>
               </select>
             </label>
-            <label>Platen or element<input name="platen_note" placeholder="38 × 38 cm" /></label>
+            <label>Platen or element<input name="platen_note" placeholder="Mug element" /></label>
             <label>Controller reads this many °C too high<input name="offset_c" type="number" step="0.5" defaultValue={0} /></label>
+            <label>
+              Pressure control
+              <select name="pressure_style" defaultValue="words">
+                <option value="auto">Automatic, about 60 kg</option>
+                <option value="words">Light, medium, firm</option>
+                <option value="knob">Numbered knob</option>
+                <option value="psi">PSI gauge</option>
+              </select>
+            </label>
+            <label>Timer stops at (seconds)<input name="max_seconds" type="number" min={1} step={1} placeholder="No limit" /></label>
           </div>
-          <input type="hidden" name="pressure_style" value="words" />
           <label>Notes<input name="notes" /></label>
+          <label>Tips, one per line<textarea name="tips" placeholder="First three lines show on the press card" /></label>
           <button className="primary" type="submit">Add press</button>
         </form>
       </section>

@@ -71,6 +71,8 @@ export type Machine = {
   offsetC: number;
   pressureStyle: string;
   notes: string;
+  tips: string;
+  maxSeconds: number | null;
 };
 
 export type Recipe = {

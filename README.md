@@ -25,7 +25,7 @@ Your shelf, tested settings, and logs live in `data/press.db`. That file is not 
 - **Settings** are the heat, time, pressure, and steps for one blank, material, and print method.
 - **End products** are the things you sell, pointed at a blank and a setting.
 - **Stock** is how many of a blank, size, and material are on the shelf.
-- **Presses** can be added later. A temperature offset lets a controller that reads high still land on the right platen temperature.
+- **Presses** start with the UK 230V HTVRONT Auto Heat Press (38 × 38 cm). Tips and a timer cap live on the machine and can be edited. A temperature offset lets a controller that reads high still land on the right platen temperature.
 
 Sublimation on cotton is blocked. Cotton uses vinyl or DTF. Mugs and tumblers ask for the cup press.
 

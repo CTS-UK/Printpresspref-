@@ -572,20 +572,26 @@ export function saveMachine(db: PressDb, input: {
   offsetC: number;
   pressureStyle: string;
   notes: string;
+  tips: string;
+  maxSeconds: number | null;
 }): MutationResult {
   if (!input.name) return fail("Name the press.");
   const kind = input.kind === "cup" ? "cup" : "flat";
   if (!Number.isFinite(input.offsetC)) return fail("The temperature offset needs a number. Use 0 if you have not measured it.");
+  if (input.maxSeconds != null && (!Number.isInteger(input.maxSeconds) || input.maxSeconds <= 0)) {
+    return fail("Maximum seconds needs a whole number above zero, or leave it blank.");
+  }
+  const style = input.pressureStyle || "words";
   if (input.id) {
     const result = db.prepare(
-      `UPDATE machines SET name = ?, kind = ?, platen_note = ?, offset_c = ?, pressure_style = ?, notes = ? WHERE id = ?`,
-    ).run(input.name, kind, input.platenNote, input.offsetC, input.pressureStyle || "words", input.notes, input.id);
+      `UPDATE machines SET name = ?, kind = ?, platen_note = ?, offset_c = ?, pressure_style = ?, notes = ?, tips = ?, max_seconds = ? WHERE id = ?`,
+    ).run(input.name, kind, input.platenNote, input.offsetC, style, input.notes, input.tips, input.maxSeconds, input.id);
     if (result.changes === 0) return fail("That press no longer exists.");
     return { ok: true, id: input.id };
   }
   const inserted = db.prepare(
-    `INSERT INTO machines (name, kind, platen_note, offset_c, pressure_style, notes) VALUES (?, ?, ?, ?, ?, ?)`,
-  ).run(input.name, kind, input.platenNote, input.offsetC, input.pressureStyle || "words", input.notes);
+    `INSERT INTO machines (name, kind, platen_note, offset_c, pressure_style, notes, tips, max_seconds) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(input.name, kind, input.platenNote, input.offsetC, style, input.notes, input.tips, input.maxSeconds);
   return { ok: true, id: Number(inserted.lastInsertRowid) };
 }
 

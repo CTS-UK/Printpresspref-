@@ -4,6 +4,7 @@ import { RecipeCard } from "@/components/RecipeCard";
 import { getDb, loadCatalog } from "@/lib/db";
 import { byId, pressHref, readId, readText } from "@/lib/format";
 import { mainPressSeconds } from "@/lib/labels";
+import { splitLongPresses } from "@/lib/machine";
 import { applyTimeOverride, chooseRecipe, methodAccess, recipesFor } from "@/lib/match";
 import { controllerSetpoint } from "@/lib/units";
 import type { Material } from "@/lib/types";
@@ -190,6 +191,7 @@ export default async function HomePage({
   const shownPressure = override?.pressure || recipe.pressure;
   const baseSeconds = mainPressSeconds(recipe.steps, recipe.timeSeconds);
   const timed = applyTimeOverride(recipe.steps, baseSeconds, override?.timeSeconds ?? null);
+  const steps = splitLongPresses(timed.steps, machine?.maxSeconds ?? null);
   const timeNote = override?.timeSeconds != null && !timed.applied
     ? "This press has its own time saved, but the recipe presses more than once, so the steps were left as written."
     : null;
@@ -227,7 +229,7 @@ export default async function HomePage({
         shownTempF={shownTempC === recipe.tempC ? recipe.tempF : null}
         shownPressure={shownPressure}
         knob={override?.knob ?? ""}
-        steps={timed.steps}
+        steps={steps}
         timeNote={timeNote}
         sizes={sizes}
         sites={sites}

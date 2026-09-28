@@ -291,6 +291,15 @@ export async function storeMachine(formData: FormData) {
   const offsetRaw = textField(formData, "offset_c");
   const offset = offsetRaw === "" ? 0 : Number(offsetRaw);
   if (!Number.isFinite(offset)) bounce("/library", "Temperature offset needs a number. Use 0 if you have not measured the platen.");
+  const maxRaw = textField(formData, "max_seconds");
+  let maxSeconds: number | null = null;
+  if (maxRaw !== "") {
+    const parsed = Number(maxRaw);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      bounce("/library", "Maximum seconds needs a whole number above zero, or leave it blank.");
+    }
+    maxSeconds = parsed;
+  }
   const result = saveMachine(getDb(), {
     id: intField(formData, "id"),
     name: textField(formData, "name"),
@@ -299,6 +308,8 @@ export async function storeMachine(formData: FormData) {
     offsetC: offset,
     pressureStyle: textField(formData, "pressure_style"),
     notes: textField(formData, "notes"),
+    tips: textField(formData, "tips"),
+    maxSeconds,
   });
   if (!result.ok) bounce("/library", result.error);
   done("/library", "Press saved.");

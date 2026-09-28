@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import "./silence-sqlite";
 import { DatabaseSync } from "node:sqlite";
+import { workshopPress } from "./machine";
 import { starter, starterIssues, type StarterSize } from "./starter";
 import type {
   Blank,
@@ -58,7 +59,9 @@ CREATE TABLE IF NOT EXISTS machines (
   platen_note TEXT NOT NULL DEFAULT '',
   offset_c REAL NOT NULL DEFAULT 0,
   pressure_style TEXT NOT NULL DEFAULT 'words',
-  notes TEXT NOT NULL DEFAULT ''
+  notes TEXT NOT NULL DEFAULT '',
+  tips TEXT NOT NULL DEFAULT '',
+  max_seconds INTEGER
 );
 CREATE TABLE IF NOT EXISTS blanks (
   id INTEGER PRIMARY KEY,
@@ -219,11 +222,36 @@ function parseSteps(raw: unknown): Step[] {
   }
 }
 
+export function ensureMachineColumns(db: PressDb): void {
+  const columns = db.prepare("PRAGMA table_info(machines)").all() as { name: string }[];
+  const names = new Set(columns.map((column) => column.name));
+  if (!names.has("tips")) db.exec("ALTER TABLE machines ADD COLUMN tips TEXT NOT NULL DEFAULT ''");
+  if (!names.has("max_seconds")) db.exec("ALTER TABLE machines ADD COLUMN max_seconds INTEGER");
+}
+
 export function openDatabase(filename: string): PressDb {
   const db = new DatabaseSync(filename);
   db.exec("PRAGMA foreign_keys = ON");
   db.exec(SCHEMA);
+  ensureMachineColumns(db);
   return db;
+}
+
+export function ensureWorkshopPress(db: PressDb): void {
+  const existing = db.prepare("SELECT id FROM machines WHERE name = ?").get(workshopPress.name) as { id: number } | undefined;
+  if (existing) return;
+  db.prepare(
+    `INSERT INTO machines (name, kind, platen_note, offset_c, pressure_style, notes, tips, max_seconds)
+     VALUES (?, ?, ?, 0, ?, ?, ?, ?)`,
+  ).run(
+    workshopPress.name,
+    workshopPress.kind,
+    workshopPress.platenNote,
+    workshopPress.pressureStyle,
+    workshopPress.notes,
+    workshopPress.tips,
+    workshopPress.maxSeconds,
+  );
 }
 
 export function seedIfEmpty(db: PressDb): void {
@@ -356,6 +384,7 @@ export function seedIfEmpty(db: PressDb): void {
     );
   }
 
+  ensureWorkshopPress(db);
   db.prepare("INSERT INTO meta (key, value) VALUES ('seeded', '1')").run();
 }
 
@@ -367,6 +396,8 @@ export function getDb(): PressDb {
     seedIfEmpty(db);
     globalForDb.pressDb = db;
   }
+  ensureMachineColumns(globalForDb.pressDb);
+  ensureWorkshopPress(globalForDb.pressDb);
   return globalForDb.pressDb;
 }
 
@@ -467,6 +498,8 @@ export function loadCatalog(db: PressDb = getDb()): Catalog {
       offsetC: Number(row.offset_c ?? 0),
       pressureStyle: String(row.pressure_style ?? "words"),
       notes: String(row.notes ?? ""),
+      tips: String(row.tips ?? ""),
+      maxSeconds: asNumber(row.max_seconds),
     }),
   );
 

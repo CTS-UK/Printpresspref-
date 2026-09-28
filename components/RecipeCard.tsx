@@ -1,6 +1,7 @@
 import { recordPress, saveTestedCopy } from "@/app/actions";
 import { StepTimer } from "@/components/StepTimer";
 import { glanceChips, peelHelpText, peelLabel, pressureHelpText, pressureLabel, pressKindLabel, rangeLine, timeHeadline } from "@/lib/labels";
+import { autoPressureSentence, machineWarnings, tipLines, visibleTipCount } from "@/lib/machine";
 import { fahrenheitNote, fahrenheitToShow } from "@/lib/units";
 import type { Blank, Machine, Material, Method, PrintSite, Recipe, Size, Step, StockItem } from "@/lib/types";
 
@@ -50,6 +51,11 @@ export function RecipeCard({
   const fahrenheit = fahrenheitToShow(shownTempC, shownTempF);
   const chips = glanceChips(recipe);
   const range = rangeLine(recipe);
+  const tips = tipLines(machine?.tips ?? "");
+  const leadTips = tips.slice(0, visibleTipCount);
+  const moreTips = tips.slice(visibleTipCount);
+  const extraWarnings = machine ? machineWarnings(blank.name, machine.pressureStyle) : [];
+  const pressureHelp = machine?.pressureStyle === "auto" ? autoPressureSentence() : pressureHelpText(shownPressure);
   const matchingStock = stock.filter((item) => item.blankId === blank.id && item.materialId === material.id);
   const sized = sizeId ? matchingStock.find((item) => item.sizeId === sizeId) : undefined;
   const onShelf = sized?.quantity ?? matchingStock.reduce((sum, item) => sum + item.quantity, 0);
@@ -69,7 +75,7 @@ export function RecipeCard({
         {recipe.pressurePsi ? ` · about ${recipe.pressurePsi} psi` : ""} · {peelLabel(recipe.peel)}
         {recipe.peelWaitSeconds > 0 ? ` after ${recipe.peelWaitSeconds}s` : ""}
       </p>
-      <p className="muted">{pressureHelpText(shownPressure)} {peelHelpText(recipe.peel)}{knob ? ` Knob ${knob}.` : ""}</p>
+      <p className="muted">{pressureHelp} {peelHelpText(recipe.peel)}{knob ? ` Knob ${knob}.` : ""}</p>
       {recipe.pressureNote ? <p>{recipe.pressureNote}</p> : null}
       {machine ? (
         <p className="note-box">
@@ -84,6 +90,18 @@ export function RecipeCard({
       )}
       {blank.requiredPress !== "any" && machine && machine.kind !== blank.requiredPress ? (
         <p className="warn-box">This blank needs a {pressKindLabel(blank.requiredPress).toLowerCase()}. {machine.name} is a {pressKindLabel(machine.kind).toLowerCase()}.</p>
+      ) : null}
+      {leadTips.length > 0 ? (
+        <div className="note-box">
+          {leadTips.map((line) => <p key={line}>{line}</p>)}
+        </div>
+      ) : null}
+      {extraWarnings.map((line) => <p className="warn-box" key={line}>{line}</p>)}
+      {moreTips.length > 0 ? (
+        <details>
+          <summary>How to use this press</summary>
+          {moreTips.map((line) => <p key={line}>{line}</p>)}
+        </details>
       ) : null}
       {warning ? <p className="warn-box">{warning}</p> : null}
       {recipe.warnings ? <p className="warn-box">{recipe.warnings}</p> : null}
